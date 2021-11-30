@@ -38,6 +38,7 @@ check_input proc
     mov bp, sp
     push cx
     push dx
+    push bx
 
     mov bx, [bp + 4]
     xor cx, cx   
@@ -53,14 +54,16 @@ CHECK:
     ja ERROR   
 
     cmp dl, 5ah
-    ja LABEL1
+    jb LABEL1
 
-LABEL1:
     cmp dl, 61h
     jb ERROR
-    
+
+LABEL1: 
     inc bx
 loop CHECK
+
+jmp END_CHECK
 
 ERROR:
     lea dx, message_err
@@ -68,11 +71,12 @@ ERROR:
     jmp END_OF_PR
 
 END_CHECK:
+    pop bx
     pop dx
     pop cx
     mov sp, bp
     pop bp  
-    ret 2
+    ret 
 endp check_input
 
 print_string proc
@@ -263,6 +267,9 @@ START:
     push bx                                               ; push pointers to func arguments
     push di
     call q_sort
+
+    lea dx, message_res
+    output_str
 
     push bx
     call print_string
