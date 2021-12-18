@@ -3,10 +3,8 @@
 .stack 100h
 
 .data
-    message_in_str      db "Please enter your string: $" 
     message_err         db "Bad input$" 
-    message_res         db "Sorted string: $"
-    crlf                db 0Dh,0Ah,'$'                  ; on next line
+    crlf                db 0Ah,'$'                      ; on next line
     b_max_size          db 200                          ; max size of input buf
     b_length            db (?)                          ; real buffer size after input proc
     buff                db 200 dup (?)
@@ -19,13 +17,6 @@ output_str macro                                        ; print string(dx) in th
     pop ax
 endm
 
-input_string macro                                      ; entering a string(max size - 200)
-    push ax
-    mov ah, 0ah
-    int 21h
-    pop ax
-endm
-
 output_char macro
     push ax
     mov ah,02h
@@ -33,51 +24,71 @@ output_char macro
     pop ax
 endm
 
-check_input proc  
-    push bp    
+input_char macro                                        ; entering a single character
+    mov ah,01h
+    int 21h
+endm
+
+input_string proc        
+    push bp              
     mov bp, sp
+
     push cx
-    push dx
+    push ax
     push bx
 
     mov bx, [bp + 4]
-    xor cx, cx   
-    mov cl, [b_length]        
+    xor cx, cx       
 
-CHECK:
-    mov dl, byte ptr [bx] 
+INPUT:
+    input_char
 
-    cmp dl, 41h
+    cmp al, 13
+    jne  LABEL2
+    jmp END_OF_INPUT
+
+LABEL2:
+
+    cmp al, 41h                                         ; if(char < 'A') then goto ERROR
     jb ERROR
 
-    cmp dl, 7ah
+    cmp al, 7ah                                         ; if(char > 'z') then goto ERROR
     ja ERROR   
 
-    cmp dl, 5ah
-    jb LABEL1
+    cmp al, 5ah                                         ; if(char < 'Z') then goto LABEL1
+    jbe LABEL1
 
-    cmp dl, 61h
+    cmp al, 61h                                         ; if(char < 'a') then goto ERROR
     jb ERROR
 
-LABEL1: 
+LABEL1:
+    mov byte ptr [bx], al
     inc bx
-loop CHECK
+    inc cl
+    jmp INPUT
+END_OF_INPUT:
 
-jmp END_CHECK
+    jmp END_OF_INPUT_STRING
 
 ERROR:
+    lea dx, crlf 
+    output_str 
+    
     lea dx, message_err
     output_str
     jmp END_OF_PR
 
-END_CHECK:
+END_OF_INPUT_STRING:
+    mov byte ptr [b_length], cl
+
     pop bx
-    pop dx
+    pop ax
     pop cx
-    mov sp, bp
-    pop bp  
-    ret 
-endp check_input
+
+    mov sp,bp
+    pop bp      
+    ret 2
+endp input_string
 
 print_string proc
     push bp              
@@ -243,16 +254,11 @@ START:
     mov ax,@data
     mov ds,ax
 
-    lea dx, message_in_str
-    output_str
-
-    lea dx, b_max_size
-    input_string
-
-    lea dx, crlf
-    output_str
-
     lea bx, byte ptr[buff]                                ; load effective adress of buf
+    push bx                                                   
+    call input_string
+
+    lea bx, byte ptr[buff]
     xor ax, ax
     mov al, byte ptr [b_length]  
     push bx                                               ; load effective adress of end of buf in di
@@ -261,15 +267,9 @@ START:
     mov di, bx
     pop bx
 
-    push bx
-    call check_input
-
     push bx                                               ; push pointers to func arguments
     push di
     call q_sort
-
-    lea dx, message_res
-    output_str
 
     push bx
     call print_string
