@@ -27,6 +27,8 @@ input_char macro                                        ; entering a single char
     int 21h
 endm
 
+open_file
+
 input_proc macro                                        ; checks if the number is greater than three digits, pressing enter and whether it is negative
 local WHILE_START,WHILE_END,FOR_NEG,WHILE_START_NEG,WHILE_END_NEG,END_OF_INPUT_PROC,LABEL1,LABEL2
 
@@ -309,7 +311,7 @@ EXTERNAL_FOR_SEARCH:
     SUM_CMP:
         xor ax,ax
         mov ax,si
-        div byte ptr [rows]           
+        div byte ptr [cols]           
         shr ax,8
         add ax,bx                                 
         add ax,2h
@@ -322,7 +324,7 @@ EXTERNAL_FOR_SEARCH:
     NEW_SUM_FOR_NOT_EQUALS:
         xor ax,ax
         mov ax,si
-        div byte ptr [rows]           
+        div byte ptr [cols]           
         shr ax,8
         add ax,bx                                 
         add ax,2h

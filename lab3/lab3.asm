@@ -44,7 +44,11 @@ INPUT:
     input_char
 
     cmp al, 13
-    jne  LABEL2
+    jne LABEL3
+    jmp END_OF_INPUT
+LABEL3:
+    cmp al, 10
+    jne LABEL2
     jmp END_OF_INPUT
 
 LABEL2:
